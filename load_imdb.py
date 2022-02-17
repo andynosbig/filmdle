@@ -34,7 +34,9 @@ with open("title.basics.tsv", 'r') as basics:
         film["title"] = row['primaryTitle']
         film["startYear"] = int(row['startYear'])
         film["genres"] = row['genres']
+        film.setdefault('principals', [])
         films[film["id"]]= film
+        
         # test_count += 1
         # if test_count == 1000:
         #     break
@@ -45,29 +47,31 @@ with open("title.ratings.tsv", 'r') as ratings:
     for row in reader:
         filmId = row['tconst']
         if filmId in films:
-            if int(row['numVotes']) > 10000 and float(row['averageRating']) > 7.0:
+            if int(row['numVotes']) > 15000 and float(row['averageRating']) > 7.5:
                 rated_films[filmId] = films[filmId]
 
 print(len(rated_films))
 films = rated_films
-with open("title.principals.tsv", 'r') as principals:
-    reader = csv.DictReader(principals, delimiter='\t')
-    for row in reader:
-        filmId = row['tconst']
-        if filmId in films:
-            films[filmId].setdefault('principals', []).append(row['nconst'])
+# with open("title.principals.tsv", 'r') as principals:
+#     reader = csv.DictReader(principals, delimiter='\t')
+#     for row in reader:
+#         filmId = row['tconst']
+#         if filmId in films:
+#             films[filmId].setdefault('principals', []).append(row['nconst'])
 
+important_principals = {}
 with open("name.basics.tsv", 'r') as names:
-    with open("name.short.tsv", 'w') as names_out:
-        names_out.write("id\tname")
-        reader = csv.DictReader(names, delimiter='\t')
-        for row in reader:
-            knownFors = row['knownForTitles'].split(',')
-            for knownFor in knownFors:
-                if knownFor in films:
-                    # films[knownFor].setdefault('principals', []).append({'id': row['nconst'], 'name': row['primaryName']})
-                    names_out.write(f"\n{row['nconst']}\t{row['primaryName']}")
-                    break
+    reader = csv.DictReader(names, delimiter='\t')
+    for row in reader:
+        knownFors = row['knownForTitles'].split(',')
+        if "actor" not in row['primaryProfession'] and "director" not in row['primaryProfession']:
+            continue
+        if len(knownFors) < 2:
+            continue
+        for knownFor in knownFors:
+            if knownFor in films:
+                films[knownFor].setdefault('principals', []).append(row['primaryName'])
+                break
 
 with open('combined.tsv', 'w', newline='') as tsvfile:
     fieldnames = list(films.values())[0].keys()
