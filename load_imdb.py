@@ -15,7 +15,7 @@ with open("title.basics.tsv", 'r') as basics:
             if int(row['startYear']) < 1980:
                 continue
 
-            if int(row['runtimeMinutes']) < 60:
+            if int(row['runtimeMinutes']) < 80:
                 continue
         except:
             continue
@@ -39,16 +39,17 @@ with open("title.basics.tsv", 'r') as basics:
         # if test_count == 1000:
         #     break
 
+rated_films = {}
 with open("title.ratings.tsv", 'r') as ratings:
     reader = csv.DictReader(ratings, delimiter='\t')
     for row in reader:
         filmId = row['tconst']
         if filmId in films:
-            if int(row['numVotes']) < 8000 or float(row['averageRating']) < 7.0:
-                films.pop(filmId)
+            if int(row['numVotes']) > 10000 and float(row['averageRating']) > 7.0:
+                rated_films[filmId] = films[filmId]
 
-print(len(films))
-
+print(len(rated_films))
+films = rated_films
 with open("title.principals.tsv", 'r') as principals:
     reader = csv.DictReader(principals, delimiter='\t')
     for row in reader:
