@@ -45,20 +45,19 @@ with open("title.ratings.tsv", 'r') as ratings:
     for row in reader:
         filmId = row['tconst']
         if filmId in films:
-            if int(row['numVotes']) > 10000 and float(row['averageRating']) > 6.5:
+            if int(row['numVotes']) > 13000 and float(row['averageRating']) > 7.0:
                 rated_films[filmId] = films[filmId]
 
 print("post popularity filtering", len(rated_films))
 films = rated_films
+
 film_names = {}
-
-
 def read_rows_until_crash(reader, film_names):
     try:
         # hopefully starts where it left off
         for row in reader:
             if row['titleId'] in films:
-                if row['isOriginalTitle']:
+                if row['isOriginalTitle'] == "1":
                     film_names.setdefault(row['titleId'], {})["original"] = row['title']
                 if row['region'] == "US":
                     film_names.setdefault(row['titleId'], {})["US"] = row['title']
@@ -76,10 +75,11 @@ with open("title.akas.tsv", 'r') as titles:
         continue
 
 for id in film_names:
-    if (film_names[id].get("original") != film_names[id].get("US")) or (film_names[id].get("original") != film_names[id].get("GB")):
+    if (film_names[id].get("original") != film_names[id].get("US")) and (film_names[id].get("original") != film_names[id].get("GB")):
         films.pop(id)
 
 print("post language filtering", len(films))
+print(films['tt0117951'])
 
 all_principals = set()
 with open("title.principals.tsv", 'r') as principals:
