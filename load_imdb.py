@@ -37,17 +37,50 @@ with open("title.basics.tsv", 'r') as basics:
         film.setdefault('principals', [])
         films[film["id"]]= film
 
+print("post genres, length, year filtering", len(films))
+
 rated_films = {}
 with open("title.ratings.tsv", 'r') as ratings:
     reader = csv.DictReader(ratings, delimiter='\t')
     for row in reader:
         filmId = row['tconst']
         if filmId in films:
-            if int(row['numVotes']) > 15000 and float(row['averageRating']) > 7.5:
+            if int(row['numVotes']) > 10000 and float(row['averageRating']) > 6.5:
                 rated_films[filmId] = films[filmId]
 
-print(len(rated_films))
+print("post popularity filtering", len(rated_films))
 films = rated_films
+film_names = {}
+
+
+def read_rows_until_crash(reader, film_names):
+    try:
+        # hopefully starts where it left off
+        for row in reader:
+            if row['titleId'] in films:
+                if row['isOriginalTitle']:
+                    film_names.setdefault(row['titleId'], {})["original"] = row['title']
+                if row['region'] == "US":
+                    film_names.setdefault(row['titleId'], {})["US"] = row['title']
+                if row['region'] == "GB":
+                    film_names.setdefault(row['titleId'], {})["GB"] = row['title']
+    except:
+        return 1
+    # actually finished
+    return 0
+
+with open("title.akas.tsv", 'r') as titles:
+    reader = csv.DictReader(titles, delimiter='\t')
+    # possibly some unicode issue causes a "too many column error" somewhere in this file, try to get past by swallowing exception
+    while read_rows_until_crash(reader, film_names):
+        continue
+
+for id in film_names:
+    if (film_names[id].get("original") != film_names[id].get("US")) or (film_names[id].get("original") != film_names[id].get("GB")):
+        films.pop(id)
+
+print("post language filtering", len(films))
+
 all_principals = set()
 with open("title.principals.tsv", 'r') as principals:
     reader = csv.DictReader(principals, delimiter='\t')
