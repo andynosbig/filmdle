@@ -2,9 +2,8 @@ import csv
 import pprint
 
 films = {}
-all_genres = set()
 test_count = 0
-with open("title.basics.tsv", 'r') as basics:
+with open("./imdb_data/title.basics.tsv", 'r') as basics:
     reader = csv.DictReader(basics, delimiter='\t')
     for row in reader:
         if row['titleType'] != 'movie':
@@ -40,12 +39,12 @@ with open("title.basics.tsv", 'r') as basics:
 print("post genres, length, year filtering", len(films))
 
 rated_films = {}
-with open("title.ratings.tsv", 'r') as ratings:
+with open("./imdb_data/title.ratings.tsv", 'r') as ratings:
     reader = csv.DictReader(ratings, delimiter='\t')
     for row in reader:
         filmId = row['tconst']
         if filmId in films:
-            if int(row['numVotes']) > 13000 and float(row['averageRating']) > 7.0:
+            if int(row['numVotes']) > 10000 and float(row['averageRating']) > 4.0:
                 rated_films[filmId] = films[filmId]
 
 print("post popularity filtering", len(rated_films))
@@ -68,7 +67,7 @@ def read_rows_until_crash(reader, film_names):
     # actually finished
     return 0
 
-with open("title.akas.tsv", 'r') as titles:
+with open("./imdb_data/title.akas.tsv", 'r') as titles:
     reader = csv.DictReader(titles, delimiter='\t')
     # possibly some unicode issue causes a "too many column error" somewhere in this file, try to get past by swallowing exception
     while read_rows_until_crash(reader, film_names):
@@ -79,10 +78,9 @@ for id in film_names:
         films.pop(id)
 
 print("post language filtering", len(films))
-print(films['tt0117951'])
 
 all_principals = set()
-with open("title.principals.tsv", 'r') as principals:
+with open("./imdb_data/title.principals.tsv", 'r') as principals:
     reader = csv.DictReader(principals, delimiter='\t')
     for row in reader:
         filmId = row['tconst']
@@ -91,11 +89,19 @@ with open("title.principals.tsv", 'r') as principals:
             all_principals.add(row['nconst'])
 
 principal_names = {}
-with open("name.basics.tsv", 'r') as names:
+with open("./imdb_data/name.basics.tsv", 'r') as names:
     reader = csv.DictReader(names, delimiter='\t')
     for row in reader:
         if row['nconst'] in all_principals:
             principal_names[row['nconst']] = row['primaryName']
+
+with open('genres.csv', 'w', newline='') as csvfile:
+    all_genres = set()
+    for id in films:
+        for genre in films[id]['genres'].split(','):
+            all_genres.add(genre)
+
+    csvfile.write(",".join(all_genres))
 
 with open('principals.tsv', 'w', newline='') as tsvfile:
     writer = csv.DictWriter(tsvfile, fieldnames=["id", "name"], delimiter='\t')
